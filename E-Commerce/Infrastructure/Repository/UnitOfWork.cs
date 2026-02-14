@@ -5,7 +5,8 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
-using Domain.Interfaces;
+using Domain.Interfaces.IRepository;
+using Domain.Interfaces.IunitOfWork;
 using Infrastructure.Data;
 
 namespace Infrastructure.Repository

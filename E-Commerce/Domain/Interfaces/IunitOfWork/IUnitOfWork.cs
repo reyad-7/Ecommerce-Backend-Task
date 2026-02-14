@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities.Models;
+using Domain.Interfaces.IRepository;
 
-namespace Domain.Interfaces
+namespace Domain.Interfaces.IunitOfWork
 {
         public interface IUnitOfWork : IDisposable
         {
