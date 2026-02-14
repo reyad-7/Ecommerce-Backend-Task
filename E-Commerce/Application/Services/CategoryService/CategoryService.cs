@@ -16,7 +16,6 @@ namespace Application.Services.CategoryService
     public class CategoryService : ICategoryService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private object awiat;
 
         public CategoryService(IUnitOfWork unitOfWork)
         {
