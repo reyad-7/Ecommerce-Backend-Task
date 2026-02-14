@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Services.CategoryService;
+using Application.Services.ProductService;
 using Domain.Entities.Models;
 using Domain.Interfaces.ICategoryService;
+using Domain.Interfaces.IProductService;
 using Domain.Interfaces.IunitOfWork;
 using Infrastructure.Data;
 using Infrastructure.Repository;
@@ -32,6 +34,7 @@ namespace Infrastructure
 
             // Services
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IProductService, ProductService>();
 
             return services;
         }
