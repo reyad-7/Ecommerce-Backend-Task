@@ -5,10 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Services.AuthService;
 using Application.Services.CategoryService;
+using Application.Services.OrderService;
 using Application.Services.ProductService;
 using Application.Services.TokenService;
 using Domain.Entities.Models;
 using Domain.Interfaces.ICategoryService;
+using Domain.Interfaces.IOrderService;
 using Domain.Interfaces.IProductService;
 using Domain.Interfaces.ITokenService;
 using Domain.Interfaces.IunitOfWork;
@@ -79,6 +81,7 @@ namespace Infrastructure
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<Domain.Interfaces.IAuthService.IAuthServie, AuthService>();
+            services.AddScoped<IOrderService, OrderService>();
 
             return services;
         }
