@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Extensions;
 using Domain.DTOS.Product;
+using Domain.Entities;
 using Domain.Entities.Models;
 using Domain.Interfaces.IProductService;
 using Domain.Interfaces.IunitOfWork;
@@ -21,35 +22,41 @@ namespace Application.Services.ProductService
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<GeneralResponseDto<ProductListDto>> GetAllProductsAsync()
+      
+
+        public async Task<GeneralResponseDto<PaginatedResult<ProductListDto>>>
+    GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)
         {
             try
             {
-                var products = await _unitOfWork.Products.FindAllAsync(
-                    criteria: p => true,
-                    includes: new[] { "Category" }
+                var pagedProducts = await _unitOfWork.Products.GetPagedAsync(
+                    pageNumber: pageNumber,
+                    pageSize: pageSize,
+                    includes: p => p.Category
                 );
 
-                var productDtos = products.Select(p => (p.ToResponseDto())).ToList();
+                var productDtos = pagedProducts.Items
+                    .Select(p => p.ToResponseDto());
 
-                var productsList = new ProductListDto
+                var result = new PaginatedResult<ProductListDto>
                 {
-                    Products = productDtos,
-                    TotalCount = productDtos.Count
+                    Items = (List<ProductListDto>)productDtos,
+                    TotalCount = pagedProducts.TotalCount,
+                    PageNumber = pagedProducts.PageNumber,
+                    PageSize = pagedProducts.PageSize,
+                    TotalPages = pagedProducts.TotalPages
                 };
 
-                return GeneralResponseDto<ProductListDto>.SuccessResponse(
-                    data: productsList,
-                    message: $"Retrieved {productDtos.Count} products successfully"
-                );
+                return GeneralResponseDto<PaginatedResult<ProductListDto>>
+                    .SuccessResponse(result, "Products retrieved successfully");
             }
             catch (Exception ex)
             {
-                return GeneralResponseDto<ProductListDto>.FailureResponse(
-                    $"Error retrieving products: {ex.Message}"
-                );
+                return GeneralResponseDto<PaginatedResult<ProductListDto>>
+                    .FailureResponse($"Error retrieving products: {ex.Message}");
             }
         }
+
 
         public async Task<GeneralResponseDto<ProductResponseDto>> GetProductByIdAsync(int id)
         {
@@ -436,5 +443,7 @@ namespace Application.Services.ProductService
                 );
             }
         }
+
+        
     }
 }

@@ -4,13 +4,21 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 
 namespace Domain.Interfaces.IRepository
 {
         public interface IRepository<T> where T : class
         {
             T GetById(int id);
-            Task<T> GetByIdAsync(int id);
+        public Task<PaginatedResult<T>> GetPagedAsync(
+           int pageNumber = 1,
+           int pageSize = 10,
+           Expression<Func<T, bool>> filter = null,
+           Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+           params Expression<Func<T, object>>[] includes);
+
+        Task<T> GetByIdAsync(int id);
             Task<T> GetByCompositeAsync(params object[] keys);
             Task<T> GetByNameAsync(string name);
             IEnumerable<T> GetAll();

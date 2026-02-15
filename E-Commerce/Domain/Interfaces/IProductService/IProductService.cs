@@ -4,13 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.DTOS.Product;
+using Domain.Entities;
 using static Domain.Entities.GeneralResponse.GeneralResponse;
 
 namespace Domain.Interfaces.IProductService
 {
     public interface IProductService
     {
-        Task<GeneralResponseDto<ProductListDto>> GetAllProductsAsync();
+        Task<GeneralResponseDto< PaginatedResult<ProductListDto>>> GetAllProductsAsync(int pageNumber = 1, int pageSize = 10);
         Task<GeneralResponseDto<ProductResponseDto>> GetProductByIdAsync(int id);
         Task<GeneralResponseDto<ProductResponseDto>> GetProductByNameAsync(string name);
         Task<GeneralResponseDto<List<ProductResponseDto>>> GetProductsByCategoryAsync(int categoryId);

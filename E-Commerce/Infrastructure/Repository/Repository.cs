@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 using Domain.Interfaces.IRepository;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,49 @@ namespace Infrastructure.Repository
         public Repository(WaffarXEcommerceDBContext context)
         {
             _context = context;
+        }
+
+        public async Task<PaginatedResult<T>> GetPagedAsync(
+            int pageNumber = 1,
+            int pageSize = 10,
+            Expression<Func<T, bool>> filter = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            params Expression<Func<T, object>>[] includes)
+        {
+            if (pageNumber < 1)
+                pageNumber = 1;
+
+            if (pageSize < 1)
+                pageSize = 10;
+
+            IQueryable<T> query = _context.Set<T>();
+
+            if (includes is { Length: > 0 })
+            {
+                query = includes.Aggregate(query, (current, include) => current.Include(include));
+            }
+
+            if (filter is not null)
+                query = query.Where(filter);
+
+            var totalCount = await query.CountAsync();
+
+            if (orderBy != null)
+                query = orderBy(query);
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PaginatedResult<T>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
         }
 
         public IEnumerable<T> GetAll()
