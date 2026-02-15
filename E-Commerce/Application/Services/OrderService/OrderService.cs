@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.Extensions;
 using Domain.DTOS.Order;
+using Domain.Entities;
 using Domain.Entities.Enums;
 using Domain.Entities.GeneralResponse;
 using Domain.Entities.Models;
@@ -155,39 +156,56 @@ namespace Application.Services.OrderService
             }
         }
 
-        public async Task<GeneralResponse.GeneralResponseDto<OrderListDto>> GetUserOrdersAsync(string userId)
+        public async Task<GeneralResponseDto<PaginatedResult<OrderSummaryDto>>> GetUserOrdersAsync(
+    string userId,
+    int pageNumber = 1,
+    int pageSize = 10)
         {
-            try { 
-            var orders = await _unitOfWork.Orders.FindAllAsync(
-                   criteria: o => o.UserId == userId,
-                   includes: new[] { "OrderItems" }
-               );
-
-            var orderSummaries = orders.Select(o => new OrderSummaryDto
+            try
             {
-                Id = o.Id,
-                OrderNumber = o.OrderNumber,
-                TotalAmount = o.TotalAmount,
-                OrderStatus = o.OrderStatus.ToString(),
-                ItemsCount = o.OrderItems?.Count ?? 0,
-                CreatedAt = o.CreatedAt
-            }).OrderByDescending(o => o.CreatedAt).ToList();
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
+                if (pageSize > 100) pageSize = 100;
 
-            var ordersListDto = new OrderListDto
-            {
-                Orders = orderSummaries,
-                TotalCount = orderSummaries.Count
-            };
-                return GeneralResponseDto<OrderListDto>.SuccessResponse(
-                         data: ordersListDto,
-                         message: $"Retrieved {orderSummaries.Count} orders"
-                     );
+                var pagedOrders = await _unitOfWork.Orders.GetPagedAsync(
+                    pageNumber: pageNumber,
+                    pageSize: pageSize,
+                    filter: o => o.UserId == userId,
+                    includes: o => o.OrderItems
+                );
+
+                var orderSummaries = pagedOrders.Items.Select(o => new OrderSummaryDto
+                {
+                    Id = o.Id,
+                    OrderNumber = o.OrderNumber,
+                    TotalAmount = o.TotalAmount,
+                    OrderStatus = o.OrderStatus.ToString(),
+                    ItemsCount = o.OrderItems?.Count ?? 0,
+                    CreatedAt = o.CreatedAt
+                }).ToList();
+
+                var result = new PaginatedResult<OrderSummaryDto>
+                {
+                    Items = orderSummaries,
+                    TotalCount = pagedOrders.TotalCount,
+                    PageNumber = pagedOrders.PageNumber,
+                    PageSize = pagedOrders.PageSize,
+                    TotalPages = pagedOrders.TotalPages
+                };
+
+                return GeneralResponseDto<PaginatedResult<OrderSummaryDto>>.SuccessResponse(
+                    data: result,
+                    message: $"Retrieved {orderSummaries.Count} orders (Page {pageNumber} of {result.TotalPages})"
+                );
             }
             catch (Exception ex)
             {
-                return GeneralResponse.GeneralResponseDto<OrderListDto>.FailureResponse("An error occurred while retrieving user orders.");
+                return GeneralResponseDto<PaginatedResult<OrderSummaryDto>>.FailureResponse(
+                    $"Error retrieving orders: {ex.Message}"
+                );
             }
         }
+
 
         public async Task<GeneralResponse.GeneralResponseDto<OrderResponseDto>> GetOrderByOrderNumberAsync(string userId, string orderNumber)
         {
