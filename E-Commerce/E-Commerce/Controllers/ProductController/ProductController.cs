@@ -21,9 +21,11 @@ namespace E_Commerce.Controllers.ProductController
         /// </summary>
         /// <returns>List of all products</returns>
         [HttpGet]
-        public async Task<IActionResult> GetAllProducts()
+        public async Task<IActionResult> GetAllProducts(
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 10)
         {
-            var response = await _productService.GetAllProductsAsync();
+            var response = await _productService.GetAllProductsAsync(pageNumber, pageSize);
 
             if (!response.Success)
             {
@@ -38,7 +40,7 @@ namespace E_Commerce.Controllers.ProductController
         /// </summary>
         /// <param name="id">Product ID</param>
         /// <returns>Product details</returns>
-        
+
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetProductById(int id)
         {

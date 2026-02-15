@@ -22,38 +22,42 @@ namespace Application.Services.ProductService
             _unitOfWork = unitOfWork;
         }
 
-      
-
-        public async Task<GeneralResponseDto<PaginatedResult<ProductListDto>>>
-    GetAllProductsAsync(int pageNumber = 1, int pageSize = 10)
+        public async Task<GeneralResponseDto<PaginatedResult<ProductResponseDto>>> GetAllProductsAsync(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
             try
             {
                 var pagedProducts = await _unitOfWork.Products.GetPagedAsync(
                     pageNumber: pageNumber,
                     pageSize: pageSize,
+                    filter: null,
+                    orderBy: q => q.OrderBy(p => p.Name),
                     includes: p => p.Category
                 );
 
                 var productDtos = pagedProducts.Items
-                    .Select(p => p.ToResponseDto());
+                    .Select(p => p.ToResponseDto()).ToList();
 
-                var result = new PaginatedResult<ProductListDto>
+                var result = new PaginatedResult<ProductResponseDto>
                 {
-                    Items = (List<ProductListDto>)productDtos,
+                    Items = productDtos,
                     TotalCount = pagedProducts.TotalCount,
                     PageNumber = pagedProducts.PageNumber,
                     PageSize = pagedProducts.PageSize,
                     TotalPages = pagedProducts.TotalPages
                 };
 
-                return GeneralResponseDto<PaginatedResult<ProductListDto>>
-                    .SuccessResponse(result, "Products retrieved successfully");
+                return GeneralResponseDto<PaginatedResult<ProductResponseDto>>.SuccessResponse(
+                    data: result,
+                    message: $"Retrieved {productDtos.Count} products (Page {pageNumber} of {result.TotalPages})"
+                );
             }
             catch (Exception ex)
             {
-                return GeneralResponseDto<PaginatedResult<ProductListDto>>
-                    .FailureResponse($"Error retrieving products: {ex.Message}");
+                return GeneralResponseDto<PaginatedResult<ProductResponseDto>>.FailureResponse(
+                    $"Error retrieving products: {ex.Message}"
+                );
             }
         }
 

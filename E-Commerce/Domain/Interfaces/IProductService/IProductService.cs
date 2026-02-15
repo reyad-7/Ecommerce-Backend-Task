@@ -11,7 +11,9 @@ namespace Domain.Interfaces.IProductService
 {
     public interface IProductService
     {
-        Task<GeneralResponseDto< PaginatedResult<ProductListDto>>> GetAllProductsAsync(int pageNumber = 1, int pageSize = 10);
+        Task<GeneralResponseDto<PaginatedResult<ProductResponseDto>>> GetAllProductsAsync(
+            int pageNumber = 1,
+            int pageSize = 10); 
         Task<GeneralResponseDto<ProductResponseDto>> GetProductByIdAsync(int id);
         Task<GeneralResponseDto<ProductResponseDto>> GetProductByNameAsync(string name);
         Task<GeneralResponseDto<List<ProductResponseDto>>> GetProductsByCategoryAsync(int categoryId);
