@@ -4,14 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.DTOS.Category;
+using Domain.Entities;
 using static Domain.Entities.GeneralResponse.GeneralResponse;
 
 namespace Domain.Interfaces.ICategoryService
 {
     public interface ICategoryService
     {
-        // Get all categories (with optional pagination)
-        Task<GeneralResponseDto<Domain.DTOS.Category.CategoryListDto>> GetAllCategoriesAsync(int pageNumber = 1, int pageSize = 10);
+        // Get all categories with pagination
+        Task<GeneralResponseDto<PaginatedResult<CategoryResponseDto>>> GetAllCategoriesAsync(
+            int pageNumber = 1,
+            int pageSize = 10);
 
         // Get category by ID
         Task<GeneralResponseDto<CategoryResponseDto>> GetCategoryByIdAsync(int id);

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.DTOS.Category;
+using Domain.Entities;
 using Domain.Entities.GeneralResponse;
 using Domain.Entities.Models;
 using Domain.Interfaces.ICategoryService;
@@ -260,26 +261,28 @@ namespace Application.Services.CategoryService
             }
         }
 
-        async Task<GeneralResponseDto<CategoryListDto>>ICategoryService.GetAllCategoriesAsync(int pageNumber, int pageSize)
+        public async Task<GeneralResponseDto<PaginatedResult<CategoryResponseDto>>> GetAllCategoriesAsync(
+     int pageNumber = 1,
+     int pageSize = 10)
         {
             try
             {
                 // Validate pagination parameters
                 if (pageNumber < 1) pageNumber = 1;
                 if (pageSize < 1) pageSize = 10;
-                if (pageSize > 100) pageSize = 100;
-
-                // Get total count
-                var totalCount = await _unitOfWork.Categories.CountAsync();
-
-                // Calculate skip
-                var skip = (pageNumber - 1) * pageSize;
+                if (pageSize > 100) pageSize = 100; // Max page size
 
                 // Get paginated categories
-                var categories = await _unitOfWork.Categories.GetAllAsync();
+                var pagedCategories = await _unitOfWork.Categories.GetPagedAsync(
+                    pageNumber: pageNumber,
+                    pageSize: pageSize,
+                    filter: null, // Get all categories
+                    orderBy: q => q.OrderBy(c => c.Name), // Order by name
+                    includes: null // No includes needed for basic category list
+                );
 
                 // Map to DTOs
-                var categoryDtos = categories.Select(c => new CategoryResponseDto
+                var categoryDtos = pagedCategories.Items.Select(c => new CategoryResponseDto
                 {
                     Id = c.Id,
                     Name = c.Name,
@@ -288,22 +291,24 @@ namespace Application.Services.CategoryService
                     UpdatedAt = c.UpdatedAt
                 }).ToList();
 
-                var result = new CategoryListDto
+                // Create paginated result
+                var result = new PaginatedResult<CategoryResponseDto>
                 {
-                    Categories = categoryDtos,
-                    TotalCount = totalCount,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize
+                    Items = categoryDtos,
+                    TotalCount = pagedCategories.TotalCount,
+                    PageNumber = pagedCategories.PageNumber,
+                    PageSize = pagedCategories.PageSize,
+                    TotalPages = pagedCategories.TotalPages
                 };
 
-                return GeneralResponseDto<CategoryListDto>.SuccessResponse(
+                return GeneralResponseDto<PaginatedResult<CategoryResponseDto>>.SuccessResponse(
                     data: result,
-                    message: $"Retrieved {categoryDtos.Count} categories successfully"
+                    message: $"Retrieved {categoryDtos.Count} categories (Page {pageNumber} of {result.TotalPages})"
                 );
             }
             catch (Exception ex)
             {
-                return GeneralResponseDto<CategoryListDto>.FailureResponse(
+                return GeneralResponseDto<PaginatedResult<CategoryResponseDto>>.FailureResponse(
                     $"Error retrieving categories: {ex.Message}"
                 );
             }
