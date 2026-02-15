@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Domain.DTOS.Order;
+using Domain.Entities;
 using Domain.Interfaces.IOrderService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,17 +60,19 @@ namespace E_Commerce.Controllers
         /// <returns>List of user's orders</returns>
         
         [HttpGet("my-orders")]
-        public async Task<IActionResult> GetMyOrders()
+        public async Task<IActionResult> GetMyOrders(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             var userId = GetCurrentUserId();
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized(GeneralResponseDto<OrderListDto>.FailureResponse(
+                return Unauthorized(GeneralResponseDto<PaginatedResult<OrderSummaryDto>>.FailureResponse(
                     "User authentication failed"
                 ));
             }
 
-            var response = await _orderService.GetUserOrdersAsync(userId);
+            var response = await _orderService.GetUserOrdersAsync(userId, pageNumber, pageSize);
 
             if (!response.Success)
             {
@@ -84,7 +87,7 @@ namespace E_Commerce.Controllers
         /// </summary>
         /// <param name="orderId">Order ID</param>
         /// <returns>Order details</returns>
-        
+
         [HttpGet("{orderId:int}")]
         public async Task<IActionResult> GetOrderById(int orderId)
         {
