@@ -21,7 +21,7 @@ namespace Application.Extensions
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Token = token,
-                ExpiresAt = DurationInDays
+                ExpiresIn = DurationInDays
             };
         }
     }
