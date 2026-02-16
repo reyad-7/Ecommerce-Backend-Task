@@ -1,6 +1,7 @@
 using Infrastructure;
 using Infrastructure.Data;
 using Microsoft.OpenApi.Models;
+using E_Commerce.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +62,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add Global Exception Handling
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
