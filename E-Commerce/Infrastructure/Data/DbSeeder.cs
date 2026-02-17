@@ -64,24 +64,6 @@ namespace Infrastructure.Data
                 }
             }
 
-            // Test Admin User (optional)
-            var testAdmin = await userManager.FindByEmailAsync("admin@test.com");
-            if (testAdmin == null)
-            {
-                testAdmin = new BaseUser
-                {
-                    UserName = "admin",
-                    Email = "admin@test.com",
-                    EmailConfirmed = true,
-                };
-
-                var result = await userManager.CreateAsync(testAdmin, "Admin123!");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(testAdmin, "Admin");
-                    Console.WriteLine("✅ Test admin user created (admin@test.com / Admin123!)");
-                }
-            }
         }
 
         private static async Task SeedCategoriesAsync(WaffarXEcommerceDBContext context)
