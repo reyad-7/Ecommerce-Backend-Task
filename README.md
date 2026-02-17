@@ -163,16 +163,6 @@ Update `API/appsettings.json`:
 }
 ```
 
-**Connection String Options:**
-
-| Environment | Connection String |
-|-------------|-------------------|
-| **LocalDB** (default) | `Server=(localdb)\\mssqllocaldb;Database=WaffarXEcommerceDB;Trusted_Connection=True;` |
-| **SQL Server Express** | `Server=.\\SQLEXPRESS;Database=WaffarXEcommerceDB;Trusted_Connection=True;` |
-| **Full SQL Server** | `Server=localhost;Database=WaffarXEcommerceDB;Trusted_Connection=True;` |
-| **Azure SQL** | `Server=tcp:yourserver.database.windows.net,1433;Database=WaffarXEcommerceDB;User ID=username;Password=password;` |
-
----
 
 ### **3. Configure JWT Settings**
 
@@ -692,6 +682,40 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 ---
 
+## 🌱 Seed Data
+
+The application automatically seeds the database with test data on first run.
+
+### **Test Users**
+
+| Email | Password | Role |
+|-------|----------|------|
+| customer@test.com | Test123! | Customer |
+
+### **Categories (5)**
+- Electronics
+- Clothing
+- Books
+- Home & Kitchen
+- Sports & Outdoors
+
+### **Products (20)**
+- Various products across all categories
+- Includes low-stock items for testing inventory alerts
+- Includes out-of-stock items for testing stock validation
+
+### **How to Re-seed**
+
+If you want to reset the database and re-seed:
+```bash
+# Drop the database
+dotnet ef database drop --project Infrastructure --startup-project API
+
+# Apply migrations and seed data
+dotnet ef database update --project Infrastructure --startup-project API
+dotnet run --project API
+```
+
 
 ##  Author
 
@@ -701,4 +725,3 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 
 ---
-```
