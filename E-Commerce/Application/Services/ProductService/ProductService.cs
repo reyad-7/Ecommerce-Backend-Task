@@ -7,6 +7,7 @@ using Application.Extensions;
 using Domain.DTOS.Product;
 using Domain.Entities;
 using Domain.Entities.Models;
+using Domain.Interfaces.ICacheService;
 using Domain.Interfaces.IProductService;
 using Domain.Interfaces.IunitOfWork;
 using static Domain.Entities.GeneralResponse.GeneralResponse;
@@ -16,10 +17,17 @@ namespace Application.Services.ProductService
     public class ProductService : IProductService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICacheService _cacheService;
+        
+        private const string PRODUCT_LIST_CACHE_KEY = "products:list";
+        private const string PRODUCT_DETAIL_CACHE_KEY = "products:detail";
 
-        public ProductService(IUnitOfWork unitOfWork)
+
+
+        public ProductService(IUnitOfWork unitOfWork,ICacheService cacheService)
         {
             _unitOfWork = unitOfWork;
+            _cacheService = cacheService;
         }
 
         public async Task<GeneralResponseDto<PaginatedResult<ProductResponseDto>>> GetAllProductsAsync(
@@ -28,6 +36,22 @@ namespace Application.Services.ProductService
         {
             try
             {
+                // Validate parameters
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
+                if (pageSize > 100) pageSize = 100;
+
+                var cacheKey = $"{PRODUCT_LIST_CACHE_KEY}:page_{pageNumber}:size_{pageSize}";
+
+                var cachedResult = await _cacheService.GetAsync<PaginatedResult<ProductResponseDto>>(cacheKey);
+                if (cachedResult != null)
+                {
+                    return GeneralResponseDto<PaginatedResult<ProductResponseDto>>.SuccessResponse(
+                        data: cachedResult,
+                        message: $"Retrieved {cachedResult.Items.Count()} products from cache (Page {pageNumber} of {cachedResult.TotalPages})"
+                    );
+                }
+
                 var pagedProducts = await _unitOfWork.Products.GetPagedAsync(
                     pageNumber: pageNumber,
                     pageSize: pageSize,
@@ -37,7 +61,8 @@ namespace Application.Services.ProductService
                 );
 
                 var productDtos = pagedProducts.Items
-                    .Select(p => p.ToResponseDto()).ToList();
+                    .Select(p => p.ToResponseDto())
+                    .ToList();
 
                 var result = new PaginatedResult<ProductResponseDto>
                 {
@@ -48,9 +73,11 @@ namespace Application.Services.ProductService
                     TotalPages = pagedProducts.TotalPages
                 };
 
+                await _cacheService.SetAsync(cacheKey, result);
+
                 return GeneralResponseDto<PaginatedResult<ProductResponseDto>>.SuccessResponse(
                     data: result,
-                    message: $"Retrieved {productDtos.Count} products (Page {pageNumber} of {result.TotalPages})"
+                    message: $"Retrieved {productDtos.Count} products from database (Page {pageNumber} of {result.TotalPages})"
                 );
             }
             catch (Exception ex)
@@ -66,12 +93,25 @@ namespace Application.Services.ProductService
         {
             try
             {
+                var cacheKey = $"{PRODUCT_DETAIL_CACHE_KEY}:{id}";
+
+                // try to get from cache first
+                var cachedProduct = await _cacheService.GetAsync<ProductResponseDto>(cacheKey);
+                if (cachedProduct != null)
+                {
+                    return GeneralResponseDto<ProductResponseDto>.SuccessResponse(
+                        data: cachedProduct,
+                        message: "Product retrieved from cache"
+                    );
+                }
+
+                // If not in cache, get from database
                 var product = await _unitOfWork.Products.FindAsync(
                     criteria: p => p.Id == id,
                     includes: new[] { "Category" }
                 );
 
-                if (product is null)
+                if (product == null)
                 {
                     return GeneralResponseDto<ProductResponseDto>.FailureResponse(
                         $"Product with ID {id} not found"
@@ -80,9 +120,12 @@ namespace Application.Services.ProductService
 
                 var productDto = product.ToResponseDto();
 
+                //  Store in cache
+                await _cacheService.SetAsync(cacheKey, productDto);
+
                 return GeneralResponseDto<ProductResponseDto>.SuccessResponse(
                     data: productDto,
-                    message: "Product retrieved successfully"
+                    message: "Product retrieved from database"
                 );
             }
             catch (Exception ex)

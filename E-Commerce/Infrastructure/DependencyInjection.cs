@@ -7,8 +7,10 @@ using Application.Services.AuthService;
 using Application.Services.CategoryService;
 using Application.Services.OrderService;
 using Application.Services.ProductService;
+using Application.Services.RedisCacheService;
 using Application.Services.TokenService;
 using Domain.Entities.Models;
+using Domain.Interfaces.ICacheService;
 using Domain.Interfaces.ICategoryService;
 using Domain.Interfaces.IOrderService;
 using Domain.Interfaces.IProductService;
@@ -32,9 +34,25 @@ namespace Infrastructure
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            // db context
             services.AddDbContext<WaffarXEcommerceDBContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection")));
+
+            // Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+                options.InstanceName = configuration["Redis:InstanceName"];
+            });
+
+            //  Cache Service
+            var defaultTTL = int.Parse(configuration["Redis:DefaultTTLMinutes"] ?? "30");
+            services.AddSingleton<ICacheService>(provider =>
+            {
+                var cache = provider.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
+                return new RedisCacheService(cache, defaultTTL);
+            });
 
             // Identity
             services.AddIdentity<BaseUser, IdentityRole>(options =>
@@ -82,6 +100,7 @@ namespace Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<Domain.Interfaces.IAuthService.IAuthServie, AuthService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<ICacheService, RedisCacheService>();
 
             return services;
         }
