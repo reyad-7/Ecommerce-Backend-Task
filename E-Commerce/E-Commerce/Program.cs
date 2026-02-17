@@ -49,10 +49,20 @@ builder.Services.AddInfrastructure(builder.Configuration);
 var app = builder.Build();
 
 // Seed Roles
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await DbSeeder.SeedRolesAsync(services);
+    try
+    {
+        await DbSeeder.SeedDataAsync(services);
+        Console.WriteLine("Database seeding completed successfully");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database");
+    }
 }
 
 if (app.Environment.IsDevelopment())
