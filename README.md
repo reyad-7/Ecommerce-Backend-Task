@@ -708,13 +708,19 @@ The application automatically seeds the database with test data on first run.
 
 If you want to reset the database and re-seed:
 ```bash
+
+Run the following command from the solution root directory:
+dotnet ef database update --project Infrastructure/Infrastructure.csproj --startup-project E-Commerce/API.csproj
+
+If you want to drop db 
 # Drop the database
-dotnet ef database drop --project Infrastructure --startup-project API
+dotnet ef database drop  --project Infrastructure/Infrastructure.csproj --startup-project E-Commerce/API.csproj
 
 # Apply migrations and seed data
-dotnet ef database update --project Infrastructure --startup-project API
-dotnet run --project API
+dotnet ef database update  --project Infrastructure/Infrastructure.csproj --startup-project E-Commerce/API.csproj
+
 ```
+
 
 
 ##  Author
