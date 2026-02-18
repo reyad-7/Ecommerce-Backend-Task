@@ -9,8 +9,8 @@ namespace Domain.Entities.Models
 {
     public class BaseUser : IdentityUser
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
 
         // order Navigation property 
         public ICollection<Order> Orders { get; set; } = new List<Order>();

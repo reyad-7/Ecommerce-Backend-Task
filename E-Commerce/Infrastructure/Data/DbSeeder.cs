@@ -9,17 +9,18 @@ namespace Infrastructure.Data
     {
         public static async Task SeedDataAsync(IServiceProvider serviceProvider)
         {
+
             var context = serviceProvider.GetRequiredService<WaffarXEcommerceDBContext>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<BaseUser>>();
 
-            // Ensure database is created and migrations are applied
+          
             await context.Database.MigrateAsync();
-
+          
             // Seed Roles
             await SeedRolesAsync(roleManager);
 
-            // Seed Test User
+            // Seed Test Users
             await SeedUsersAsync(userManager);
 
             // Seed Categories
@@ -27,7 +28,8 @@ namespace Infrastructure.Data
 
             // Seed Products
             await SeedProductsAsync(context);
-        }
+
+            }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
@@ -37,9 +39,10 @@ namespace Infrastructure.Data
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                    Console.WriteLine($"✅ Role '{role}' created");
+                    var result = await roleManager.CreateAsync(new IdentityRole(role));
+                   
                 }
+               
             }
         }
 
@@ -57,22 +60,15 @@ namespace Infrastructure.Data
                 };
 
                 var result = await userManager.CreateAsync(testCustomer, "Test123!");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(testCustomer, "Customer");
-                    Console.WriteLine("✅ Test customer user created (customer@test.com / Test123!)");
-                }
+               
             }
-
+            
         }
 
         private static async Task SeedCategoriesAsync(WaffarXEcommerceDBContext context)
         {
-            if (await context.Categories.AnyAsync())
-            {
-                return;
-            }
-
+            var existingCount = await context.Categories.CountAsync();
+            
             var categories = new List<Category>
             {
                 new Category
@@ -112,16 +108,19 @@ namespace Infrastructure.Data
                 }
             };
 
+          
             await context.Categories.AddRangeAsync(categories);
-            await context.SaveChangesAsync();
-            Console.WriteLine($"✅ {categories.Count} categories seeded");
-        }
+
+            var saved = await context.SaveChangesAsync();
+          }
 
         private static async Task SeedProductsAsync(WaffarXEcommerceDBContext context)
         {
-            if (await context.Products.AnyAsync())
+            var existingCount = await context.Products.CountAsync();
+            
+            if (existingCount > 0)
             {
-                return; // Already seeded
+                return;
             }
 
             // Get categories
@@ -130,6 +129,7 @@ namespace Infrastructure.Data
             var books = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Books");
             var homeKitchen = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Home & Kitchen");
             var sports = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Sports & Outdoors");
+
 
             var products = new List<Product>
             {
@@ -330,7 +330,7 @@ namespace Infrastructure.Data
                     UpdatedAt = DateTime.UtcNow
                 },
 
-                // Low stock items (for testing low stock alerts)
+                // Low stock items
                 new Product
                 {
                     Name = "Limited Edition Smartwatch",
@@ -343,7 +343,7 @@ namespace Infrastructure.Data
                     UpdatedAt = DateTime.UtcNow
                 },
 
-                // Out of stock item (for testing stock validation)
+                // Out of stock item
                 new Product
                 {
                     Name = "Sold Out Wireless Earbuds",
@@ -358,8 +358,8 @@ namespace Infrastructure.Data
             };
 
             await context.Products.AddRangeAsync(products);
-            await context.SaveChangesAsync();
-            Console.WriteLine($"✅ {products.Count} products seeded");
-        }
+
+            var saved = await context.SaveChangesAsync();
+            }
     }
 }
